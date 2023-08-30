@@ -6,7 +6,7 @@
   "content_scripts": [
     {
       "matches": ["https://outlook.live.com/calendar/*"],
-      "runAt": "document_start",
+      "runAt": "document_idle",
       "js": ["scripts/shortcuts.js"]
     }
   ],
