@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Outlook Calendar Shortcuts",
+  "description": "Enables to define keyboard shortcuts for Outlook Calendar",
+  "version": "1.0",
+  "content_scripts": [
+    {
+      "matches": ["https://outlook.live.com/calendar/*"],
+      "js": ["scripts/shortcuts.js"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
