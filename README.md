@@ -1,0 +1,3 @@
+# OCS - Outlook Calendar Shortcuts
+
+Such emptiness...
