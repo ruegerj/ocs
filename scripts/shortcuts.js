@@ -1,16 +1,14 @@
-const KEYS = {
-    arrLeft: 37,
-    arrUp: 38,
-    arrRight: 39,
-    arrDown: 40,
-    a: 65,
-    d: 68,
-    f: 70,
-    m: 77,
-    s: 83,
-    t: 84,
-    w: 87,
-};
+const keyHandler = new Map([
+    [37, { action: prevWeek }],
+    [39, { action: nextWeek }],
+    [84, { action: today }],
+    [83, { action: toggleSplitView }],
+    [68, { action: showDay }],
+    [65, { action: showWorkweek }],
+    [87, { action: showWeek }],
+    [77, { action: showMonth }],
+    [70, { action: search, condition: (event) => event.ctrlKey }],
+]);
 
 function scrapeElements() {
     const uiElements = new Map();
@@ -41,28 +39,54 @@ function loadIconBtn(icon) {
 }
 
 function handleKeyPress(event, elements) {
-    event.preventDefault();
+    const handler = keyHandler.get(event.keyCode);
 
-    if (event.keyCode == KEYS.arrRight) {
-        console.log(elements.get('nextBtn'));
-        elements.get('nextBtn').click();
-    } else if (event.keyCode == KEYS.arrLeft) {
-        elements.get('prevBtn').click();
-    } else if (event.keyCode == KEYS.t) {
-        elements.get('todayBtn').click();
-    } else if (event.keyCode == KEYS.s) {
-        elements.get('toggleSplitViewBtn').click();
-    } else if (event.keyCode == KEYS.d) {
-        elements.get('viewDayBtn').click();
-    } else if (event.keyCode == KEYS.a) {
-        elements.get('viewWorkweekBtn').click();
-    } else if (event.keyCode == KEYS.w) {
-        elements.get('viewWeekBtn').click();
-    } else if (event.keyCode == KEYS.m) {
-        elements.get('viewMonthBtn').click();
-    } else if (event.ctrlKey && event.keyCode == KEYS.f) {
-        elements.get('searchInput').focus();
+    if (!handler) {
+        return;
     }
+
+    if (handler.condition && !handler.condition(event)) {
+        return;
+    }
+
+    event.preventDefault();
+    handler.action(elements);
+}
+
+function nextWeek(elements) {
+    elements.get('nextBtn').click();
+}
+
+function prevWeek(elements) {
+    elements.get('prevBtn').click();
+}
+
+function today(elements) {
+    elements.get('todayBtn').click();
+}
+
+function toggleSplitView(elements) {
+    elements.get('toggleSplitViewBtn').click();
+}
+
+function showDay(elements) {
+    elements.get('viewDayBtn').click();
+}
+
+function showWorkweek(elements) {
+    elements.get('viewWorkweekBtn').click();
+}
+
+function showWeek(elements) {
+    elements.get('viewWeekBtn').click();
+}
+
+function showMonth(elements) {
+    elements.get('viewMonthBtn').click();
+}
+
+function search(elements) {
+    elements.get('searchInput').focus();
 }
 
 function bootstrap() {
