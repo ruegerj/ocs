@@ -21,7 +21,9 @@ function scrapeElements() {
   uiElements.set("viewMonthBtn", loadIconBtn("CalendarLtrRegular"));
   uiElements.set(
     "todayBtn",
-    document.getElementById("id__53").parentElement.parentElement.parentElement
+    document.querySelector(
+      '[data-app-section="CalendarModuleSurfaceNavigationBar"]'
+    ).children[0]
   );
   uiElements.set("searchInput", document.getElementById("topSearchInput"));
   return uiElements;
