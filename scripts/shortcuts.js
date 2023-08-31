@@ -5,7 +5,9 @@ const KEYS = {
     arrDown: 40,
     a: 65,
     d: 68,
+    f: 70,
     m: 77,
+    s: 83,
     t: 84,
     w: 87,
 };
@@ -25,6 +27,10 @@ function scrapeElements() {
             '[data-app-section="CalendarModuleSurfaceNavigationBar"]',
         ).children[0],
     );
+    uiElements.set(
+        'toggleSplitViewBtn',
+        loadIconBtn('CalendarMultipleRegular'),
+    );
     uiElements.set('searchInput', document.getElementById('topSearchInput'));
     return uiElements;
 }
@@ -37,30 +43,31 @@ function loadIconBtn(icon) {
 function handleKeyPress(event, elements) {
     event.preventDefault();
 
-    console.log(event.keyCode);
-
     if (event.keyCode == KEYS.arrRight) {
+        console.log(elements.get('nextBtn'));
         elements.get('nextBtn').click();
     } else if (event.keyCode == KEYS.arrLeft) {
         elements.get('prevBtn').click();
     } else if (event.keyCode == KEYS.t) {
         elements.get('todayBtn').click();
+    } else if (event.keyCode == KEYS.s) {
+        elements.get('toggleSplitViewBtn').click();
+    } else if (event.keyCode == KEYS.d) {
+        elements.get('viewDayBtn').click();
+    } else if (event.keyCode == KEYS.a) {
+        elements.get('viewWorkweekBtn').click();
+    } else if (event.keyCode == KEYS.w) {
+        elements.get('viewWeekBtn').click();
+    } else if (event.keyCode == KEYS.m) {
+        elements.get('viewMonthBtn').click();
+    } else if (event.ctrlKey && event.keyCode == KEYS.f) {
+        elements.get('searchInput').focus();
     }
-    // TODO: Fix click events
-    //   } else if (event.keyCode == KEYS.d) {
-    //     elements.get("viewDayBtn").click();
-    //   } else if (event.keyCode == KEYS.a) {
-    //     elements.get("viewWorkweekBtn").click();
-    //   } else if (event.keyCode == KEYS.w) {
-    //     elements.get("viewWeekBtn").click();
-    //   } else if (event.keyCode == KEYS.m) {
-    //     console.log(elements.get("viewMonthBtn"));
-    //     elements.get("viewMonthBtn").click();
 }
 
 function bootstrap() {
     const elements = scrapeElements();
-    document.addEventListener('keyup', (event) =>
+    document.addEventListener('keydown', (event) =>
         handleKeyPress(event, elements),
     );
 }
@@ -72,7 +79,7 @@ function waitUntilLoaded(callback) {
             if (mutation.removedNodes[0] === loadingScreen) {
                 console.log('loaded');
                 observer.disconnect();
-                callback();
+                setTimeout(callback, 500); // allow React component to load properly
                 break;
             }
         }
