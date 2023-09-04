@@ -113,4 +113,12 @@ function waitUntilLoaded(callback) {
     });
 }
 
-waitUntilLoaded(bootstrap);
+(async () => {
+    const { keyMap } = await chrome.runtime.sendMessage({
+        greeting: 'load-map',
+    });
+
+    console.log('Key map loaded', keyMap);
+
+    waitUntilLoaded(bootstrap);
+})();

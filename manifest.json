@@ -3,6 +3,11 @@
     "name": "Outlook Calendar Shortcuts",
     "description": "Enables to define keyboard shortcuts for Outlook Calendar",
     "version": "1.0.0",
+    "permissions": ["storage"],
+    "background": {
+        "service_worker": "worker.js",
+        "type": "module"
+    },
     "content_scripts": [
         {
             "matches": [
