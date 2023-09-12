@@ -1,15 +1,22 @@
 const actionRegistry = new Map([
-    ['prev', prevWeek],
-    ['next', nextWeek],
-    ['today', today],
-    ['toggleSplitView', toggleSplitView],
-    ['showDay', showDay],
-    ['showWorkweek', showWorkweek],
-    ['showWeek', showWeek],
-    ['showMonth', showMonth],
-    ['search', search],
+    ['prev', (elements) => elements.get('prevBtn').click()],
+    ['next', (elements) => elements.get('nextBtn').click()],
+    ['today', (elements) => elements.get('todayBtn').click()],
+    [
+        'toggleSplitView',
+        (elements) => elements.get('toggleSplitViewBtn').click(),
+    ],
+    ['showDay', (elements) => elements.get('viewDayBtn').click()],
+    ['showWorkweek', (elements) => elements.get('viewWorkweekBtn').click()],
+    ['showWeek', (elements) => elements.get('viewWeekBtn').click()],
+    ['showMonth', (elements) => elements.get('viewMonthBtn').click()],
+    ['search', (elements) => elements.get('searchInput').focus()],
 ]);
 
+const listeners = {
+    keyPress: undefined,
+    unload: undefined,
+};
 let port;
 
 function scrapeElements() {
@@ -40,42 +47,6 @@ function loadIconBtn(icon) {
         .parentElement;
 }
 
-function nextWeek(elements) {
-    elements.get('nextBtn').click();
-}
-
-function prevWeek(elements) {
-    elements.get('prevBtn').click();
-}
-
-function today(elements) {
-    elements.get('todayBtn').click();
-}
-
-function toggleSplitView(elements) {
-    elements.get('toggleSplitViewBtn').click();
-}
-
-function showDay(elements) {
-    elements.get('viewDayBtn').click();
-}
-
-function showWorkweek(elements) {
-    elements.get('viewWorkweekBtn').click();
-}
-
-function showWeek(elements) {
-    elements.get('viewWeekBtn').click();
-}
-
-function showMonth(elements) {
-    elements.get('viewMonthBtn').click();
-}
-
-function search(elements) {
-    elements.get('searchInput').focus();
-}
-
 function log(...args) {
     console.log('[OCS]', ...args);
 }
@@ -100,16 +71,22 @@ function handleKeyPress(event, keyMap, elements) {
     actionRegistry.get(mapping.action)(elements);
 }
 
-function bootstrap(port, keyMap) {
+function mount(keyMap) {
     const elements = scrapeElements();
-    document.addEventListener('keydown', (event) =>
-        handleKeyPress(event, keyMap, elements),
-    );
-    window.addEventListener('beforeunload', () => {
-        port.disconnect();
-    });
+    listeners.keyPress = (event) => handleKeyPress(event, keyMap, elements);
+    listeners.unload = port.disconnect;
+
+    document.addEventListener('keydown', listeners.keyPress);
+    window.addEventListener('beforeunload', listeners.unload);
 
     log('Event listeners mounted');
+}
+
+function unmount() {
+    document.removeEventListener('keydown', listeners.unload);
+    window.removeEventListener('beforeunload', listeners.unload);
+
+    log('Event listeners unmounted');
 }
 
 function waitUntilLoaded(callback) {
@@ -131,6 +108,7 @@ function waitUntilLoaded(callback) {
 
 (async () => {
     port = chrome.runtime.connect({ name: 'shortcuts' });
+    port.onDisconnect.addListener(unmount);
 
     const keyMap = await chrome.runtime.sendMessage({
         request: 'load-map',
@@ -138,5 +116,5 @@ function waitUntilLoaded(callback) {
 
     log('Key mappings loaded', keyMap);
 
-    waitUntilLoaded(() => bootstrap(port, keyMap));
+    waitUntilLoaded(() => mount(keyMap));
 })();
