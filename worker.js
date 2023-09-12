@@ -25,8 +25,18 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
     }
 });
 
+chrome.runtime.onConnect.addListener(async (port) => {
+    if (port.name === 'shortcuts') {
+        console.log('Content script established connection');
+
+        port.onDisconnect.addListener(() => {
+            console.log('Content script closed connection');
+        });
+    }
+});
+
 chrome.runtime.onMessage.addListener((message, _, respond) => {
-    if (message.greeting === 'load-map') {
+    if (message.request === 'load-map') {
         loadKeyMap().then(respond);
         return true;
     }

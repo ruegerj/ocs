@@ -10,6 +10,8 @@ const actionRegistry = new Map([
     ['search', search],
 ]);
 
+let port;
+
 function scrapeElements() {
     const uiElements = new Map();
     uiElements.set('nextBtn', loadIconBtn('ChevronRightRegular'));
@@ -98,11 +100,14 @@ function handleKeyPress(event, keyMap, elements) {
     actionRegistry.get(mapping.action)(elements);
 }
 
-function bootstrap(keyMap) {
+function bootstrap(port, keyMap) {
     const elements = scrapeElements();
     document.addEventListener('keydown', (event) =>
         handleKeyPress(event, keyMap, elements),
     );
+    window.addEventListener('beforeunload', () => {
+        port.disconnect();
+    });
 
     log('Event listeners mounted');
 }
@@ -125,11 +130,13 @@ function waitUntilLoaded(callback) {
 }
 
 (async () => {
+    port = chrome.runtime.connect({ name: 'shortcuts' });
+
     const keyMap = await chrome.runtime.sendMessage({
-        greeting: 'load-map',
+        request: 'load-map',
     });
 
     log('Key mappings loaded', keyMap);
 
-    waitUntilLoaded(() => bootstrap(keyMap));
+    waitUntilLoaded(() => bootstrap(port, keyMap));
 })();
