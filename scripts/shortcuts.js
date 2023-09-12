@@ -1,13 +1,13 @@
-const keyHandler = new Map([
-    [37, { action: prevWeek }],
-    [39, { action: nextWeek }],
-    [84, { action: today }],
-    [83, { action: toggleSplitView }],
-    [68, { action: showDay }],
-    [65, { action: showWorkweek }],
-    [87, { action: showWeek }],
-    [77, { action: showMonth }],
-    [70, { action: search, condition: (event) => event.ctrlKey }],
+const actionRegistry = new Map([
+    ['prev', prevWeek],
+    ['next', nextWeek],
+    ['today', today],
+    ['toggleSplitView', toggleSplitView],
+    ['showDay', showDay],
+    ['showWorkweek', showWorkweek],
+    ['showWeek', showWeek],
+    ['showMonth', showMonth],
+    ['search', search],
 ]);
 
 function scrapeElements() {
@@ -36,21 +36,6 @@ function scrapeElements() {
 function loadIconBtn(icon) {
     return document.querySelector(`i[data-icon-name="${icon}"]`).parentElement
         .parentElement;
-}
-
-function handleKeyPress(event, elements) {
-    const handler = keyHandler.get(event.keyCode);
-
-    if (!handler) {
-        return;
-    }
-
-    if (handler.condition && !handler.condition(event)) {
-        return;
-    }
-
-    event.preventDefault();
-    handler.action(elements);
 }
 
 function nextWeek(elements) {
@@ -89,11 +74,37 @@ function search(elements) {
     elements.get('searchInput').focus();
 }
 
-function bootstrap() {
+function log(...args) {
+    console.log('[OCS]', ...args);
+}
+
+function handleKeyPress(event, keyMap, elements) {
+    const mapping = keyMap[event.keyCode];
+
+    if (!mapping) {
+        return;
+    }
+
+    if (
+        (mapping.ctrl && !event.ctrlKey) ||
+        (mapping.shift && !event.shiftKey) ||
+        (mapping.alt && !event.altKey) ||
+        !actionRegistry.has(mapping.action)
+    ) {
+        return;
+    }
+
+    event.preventDefault();
+    actionRegistry.get(mapping.action)(elements);
+}
+
+function bootstrap(keyMap) {
     const elements = scrapeElements();
     document.addEventListener('keydown', (event) =>
-        handleKeyPress(event, elements),
+        handleKeyPress(event, keyMap, elements),
     );
+
+    log('Event listeners mounted');
 }
 
 function waitUntilLoaded(callback) {
@@ -101,7 +112,7 @@ function waitUntilLoaded(callback) {
     const observer = new MutationObserver((mutations, observer) => {
         for (const mutation of mutations) {
             if (mutation.removedNodes[0] === loadingScreen) {
-                console.log('loaded');
+                log('Site fully loaded');
                 observer.disconnect();
                 setTimeout(callback, 500); // allow React component to load properly
                 break;
@@ -114,11 +125,11 @@ function waitUntilLoaded(callback) {
 }
 
 (async () => {
-    const { keyMap } = await chrome.runtime.sendMessage({
+    const keyMap = await chrome.runtime.sendMessage({
         greeting: 'load-map',
     });
 
-    console.log('Key map loaded', keyMap);
+    log('Key mappings loaded', keyMap);
 
-    waitUntilLoaded(bootstrap);
+    waitUntilLoaded(() => bootstrap(keyMap));
 })();
