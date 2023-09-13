@@ -1,4 +1,6 @@
-const DEFAULT_KEY_MAP = {
+import type { KeyMap } from './types';
+
+const DEFAULT_KEY_MAP: KeyMap = {
     37: { action: 'prev' }, // arr left
     39: { action: 'next' }, // arr right
     84: { action: 'today' }, // t
@@ -10,12 +12,12 @@ const DEFAULT_KEY_MAP = {
     70: { action: 'search', ctrl: true }, // ctrl + f
 };
 
-async function loadKeyMap() {
+async function loadKeyMap(): Promise<KeyMap | undefined> {
     const { keyMap } = await chrome.storage.local.get('keyMap');
     return keyMap;
 }
 
-async function storeKeyMap(keyMap) {
+async function storeKeyMap(keyMap: KeyMap): Promise<void> {
     await chrome.storage.local.set({ keyMap });
 }
 

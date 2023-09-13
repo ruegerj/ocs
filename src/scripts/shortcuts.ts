@@ -1,23 +1,33 @@
-const actionRegistry = new Map([
-    ['prev', (elements) => elements.get('prevBtn').click()],
-    ['next', (elements) => elements.get('nextBtn').click()],
-    ['today', (elements) => elements.get('todayBtn').click()],
+/// <reference lib="dom" />
+/// <reference lib="dom.iterable" />
+
+import type { KeyMap } from '../types';
+
+type ElementsRegistry = Map<string, HTMLElement>;
+type ActionHandler = (elements: ElementsRegistry) => void;
+
+const actionRegistry = new Map<string, ActionHandler>([
+    ['prev', (elements) => elements.get('prevBtn')?.click()],
+    ['next', (elements) => elements.get('nextBtn')?.click()],
+    ['today', (elements) => elements.get('todayBtn')?.click()],
     [
         'toggleSplitView',
-        (elements) => elements.get('toggleSplitViewBtn').click(),
+        (elements) => elements.get('toggleSplitViewBtn')?.click(),
     ],
-    ['showDay', (elements) => elements.get('viewDayBtn').click()],
-    ['showWorkweek', (elements) => elements.get('viewWorkweekBtn').click()],
-    ['showWeek', (elements) => elements.get('viewWeekBtn').click()],
-    ['showMonth', (elements) => elements.get('viewMonthBtn').click()],
-    ['search', (elements) => elements.get('searchInput').focus()],
+    ['showDay', (elements) => elements.get('viewDayBtn')?.click()],
+    ['showWorkweek', (elements) => elements.get('viewWorkweekBtn')?.click()],
+    ['showWeek', (elements) => elements.get('viewWeekBtn')?.click()],
+    ['showMonth', (elements) => elements.get('viewMonthBtn')?.click()],
+    ['search', (elements) => elements.get('searchInput')?.focus()],
 ]);
 
-const listeners = {
+const listeners: {
+    [key: string]: any;
+} = {
     keyPress: undefined,
     unload: undefined,
 };
-let port;
+let port: chrome.runtime.Port;
 
 function scrapeElements() {
     const uiElements = new Map();
@@ -32,7 +42,7 @@ function scrapeElements() {
         'todayBtn',
         document.querySelector(
             '[data-app-section="CalendarModuleSurfaceNavigationBar"]',
-        ).children[0],
+        )?.children[0],
     );
     uiElements.set(
         'toggleSplitViewBtn',
@@ -42,42 +52,49 @@ function scrapeElements() {
     return uiElements;
 }
 
-function loadIconBtn(icon) {
-    return document.querySelector(`i[data-icon-name="${icon}"]`).parentElement
-        .parentElement;
+function loadIconBtn(icon: string): HTMLElement | null | undefined {
+    return document.querySelector(`i[data-icon-name="${icon}"]`)?.parentElement
+        ?.parentElement;
 }
 
-function log(...args) {
+function log(...args: any): void {
     console.log('[OCS]', ...args);
 }
 
-function handleKeyPress(event, keyMap, elements) {
+function handleKeyPress(
+    event: KeyboardEvent,
+    keyMap: KeyMap,
+    elements: ElementsRegistry,
+): void {
     const mapping = keyMap[event.keyCode];
 
     if (!mapping) {
         return;
     }
 
+    const action = actionRegistry.get(mapping.action);
+
     if (
         (mapping.ctrl && !event.ctrlKey) ||
         (mapping.shift && !event.shiftKey) ||
         (mapping.alt && !event.altKey) ||
-        !actionRegistry.has(mapping.action)
+        !action
     ) {
         return;
     }
 
     event.preventDefault();
-    actionRegistry.get(mapping.action)(elements);
+    action(elements);
 }
 
-function mount(keyMap) {
+function mount(keyMap: KeyMap): void {
     const elements = scrapeElements();
-    listeners.keyPress = (event) => handleKeyPress(event, keyMap, elements);
+    listeners.keyPress = (event: KeyboardEvent) =>
+        handleKeyPress(event, keyMap, elements);
     listeners.unload = port.disconnect;
 
-    document.addEventListener('keydown', listeners.keyPress);
-    window.addEventListener('beforeunload', listeners.unload);
+    document.addEventListener('keydown', listeners.keyPress.bind(document));
+    window.addEventListener('beforeunload', listeners.unload.bind(document));
 
     log('Event listeners mounted');
 }
@@ -89,8 +106,13 @@ function unmount() {
     log('Event listeners unmounted');
 }
 
-function waitUntilLoaded(callback) {
+function waitUntilLoaded(callback: (...args: any[]) => void) {
     const loadingScreen = document.getElementById('loadingScreen');
+
+    if (!loadingScreen?.parentNode) {
+        return callback();
+    }
+
     const observer = new MutationObserver((mutations, observer) => {
         for (const mutation of mutations) {
             if (mutation.removedNodes[0] === loadingScreen) {
@@ -101,7 +123,8 @@ function waitUntilLoaded(callback) {
             }
         }
     });
-    observer.observe(loadingScreen.parentElement, {
+
+    observer.observe(loadingScreen.parentNode, {
         childList: true,
     });
 }

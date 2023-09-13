@@ -3,6 +3,7 @@
   "module": "worker.js",
   "type": "module",
   "devDependencies": {
+    "@types/chrome": "^0.0.245",
     "bun-types": "latest",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.4",
