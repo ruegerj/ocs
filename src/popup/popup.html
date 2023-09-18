@@ -3,10 +3,55 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Outlook Calendar Shortcuts</title>
-        <link rel="stylesheet" href="popup.css" />
+        <link rel="stylesheet" href="/bin/popup/popup.css" />
+        <!-- <link rel="stylesheet" href="popup.css" /> -->
     </head>
-    <body>
-        <h1 class="bg-red-500">Hello there :&rbbrk;</h1>
-        <script type="module" src="popup.js"></script>
+    <body class="max-w-l w-96 min-w-fit">
+        <header class="h-14">
+            <h1 class="p-2 text-2xl">OCS</h1>
+        </header>
+        <main class="p-2">
+            <h3 class="text-lg">Shortcuts</h3>
+            <form class="flex flex-col gap-y-2">
+                <div class="flex flex-row gap-12">
+                    <label for="next">Next Week</label>
+                    <span id="next" class="inline-block"></span>
+                </div>
+                <div>
+                    <label for="prev">Prev. Week</label>
+                    <span class="inline-block" id="prev"></span>
+                </div>
+                <div>
+                    <label for="today">Today</label>
+                    <span class="inline-block" id="today"></span>
+                </div>
+                <div>
+                    <label for="toggleSplitView">Toggle Split View</label>
+                    <span class="inline-block" id="toggleSplitView"></span>
+                </div>
+                <div>
+                    <label for="search">Search</label>
+                    <span class="inline-block" id="search"></span>
+                </div>
+                <div>
+                    <label for="showDay">Show Day</label>
+                    <span class="inline-block" id="showDay"></span>
+                </div>
+                <div>
+                    <label for="showWorkWeek">Show Work Week</label>
+                    <span class="inline-block" id="showWorkWeek"></span>
+                </div>
+                <div>
+                    <label for="showWeek">Show Week</label>
+                    <span class="inline-block" id="showWeek"></span>
+                </div>
+                <div>
+                    <label for="showMonth">Show Month</label>
+                    <span class="inline-block" id="showMonth"></span>
+                </div>
+            </form>
+        </main>
+        <script type="module" src="/bin/popup/popup.js"></script>
+        <!-- <script type="module" src="popup.js"></script> -->
     </body>
 </html>
