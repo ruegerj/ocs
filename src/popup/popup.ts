@@ -4,10 +4,11 @@
 import { log } from '../log';
 import { KeyBinding, KeyMap } from '../types';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 let port: chrome.runtime.Port;
 
 function populateForm(keyMap: KeyMap): void {
-    for (let action of Object.keys(keyMap)) {
+    for (const action of Object.keys(keyMap)) {
         const input = document.getElementById(action);
         const binding = keyMap[action];
 

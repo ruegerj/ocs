@@ -31,6 +31,7 @@ const actionRegistry = new Map<string, ActionHandler>([
 ]);
 
 const listeners: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 } = {
     keyPress: undefined,
@@ -122,7 +123,7 @@ function unmount() {
     log('Event listeners unmounted');
 }
 
-function waitUntilLoaded(callback: (...args: any[]) => void) {
+function waitUntilLoaded(callback: (...args: unknown[]) => void) {
     const loadingScreen = document.getElementById('loadingScreen');
 
     if (!loadingScreen?.parentNode) {

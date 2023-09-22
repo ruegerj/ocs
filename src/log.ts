@@ -1,7 +1,7 @@
-export function log(...args: any): void {
+export function log(...args: unknown[]): void {
     console.log('[OCS]', ...args);
 }
 
-export function warn(...args: any): void {
+export function warn(...args: unknown[]): void {
     console.warn('[OCS]', ...args);
 }
