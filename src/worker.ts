@@ -1,15 +1,15 @@
 import type { KeyMap } from './types';
 
 const DEFAULT_KEY_MAP: KeyMap = {
-    37: { action: 'prev' }, // arr left
-    39: { action: 'next' }, // arr right
-    84: { action: 'today' }, // t
-    83: { action: 'toggleSplitView' }, // s
-    68: { action: 'showDay' }, // d
-    65: { action: 'showWorkweek' }, // a
-    87: { action: 'showWeek' }, // w
-    77: { action: 'showMonth' }, // m
-    70: { action: 'search', ctrl: true }, // ctrl + f
+    prev: { keyCode: 37 }, // arr left
+    next: { keyCode: 39 }, // arr right
+    today: { keyCode: 84 }, // t
+    toggleSplitView: { keyCode: 83 }, // s
+    showDay: { keyCode: 68 }, // d
+    showWorkweek: { keyCode: 65 }, // a
+    showWeek: { keyCode: 87 }, // w
+    showMonth: { keyCode: 77 }, // m
+    search: { keyCode: 70, ctrl: true }, // ctrl + f
 };
 
 async function loadKeyMap(): Promise<KeyMap | undefined> {

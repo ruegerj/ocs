@@ -1,10 +1,19 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
+import { log } from '../log';
 import type { KeyMap } from '../types';
 
 type ElementsRegistry = Map<string, HTMLElement>;
 type ActionHandler = (elements: ElementsRegistry) => void;
+type KeyBindingLookup = {
+    [keyCode: number]: {
+        action: string;
+        ctrl?: boolean;
+        alt?: boolean;
+        shift?: boolean;
+    };
+};
 
 const actionRegistry = new Map<string, ActionHandler>([
     ['prev', (elements) => elements.get('prevBtn')?.click()],
@@ -57,16 +66,12 @@ function loadIconBtn(icon: string): HTMLElement | null | undefined {
         ?.parentElement;
 }
 
-function log(...args: any): void {
-    console.log('[OCS]', ...args);
-}
-
 function handleKeyPress(
     event: KeyboardEvent,
-    keyMap: KeyMap,
+    keyBindingLookup: KeyBindingLookup,
     elements: ElementsRegistry,
 ): void {
-    const mapping = keyMap[event.keyCode];
+    const mapping = keyBindingLookup[event.keyCode];
 
     if (!mapping) {
         return;
@@ -89,8 +94,19 @@ function handleKeyPress(
 
 function mount(keyMap: KeyMap): void {
     const elements = scrapeElements();
+    const keyMappingLookup = Object.entries(keyMap).reduce((acc, cur) => {
+        const [action, binding] = cur;
+        acc[binding.keyCode] = {
+            action,
+            alt: binding.alt,
+            shift: binding.shift,
+            ctrl: binding.ctrl,
+        };
+        return acc;
+    }, {} as KeyBindingLookup);
+
     listeners.keyPress = (event: KeyboardEvent) =>
-        handleKeyPress(event, keyMap, elements);
+        handleKeyPress(event, keyMappingLookup, elements);
     listeners.unload = port.disconnect;
 
     document.addEventListener('keydown', listeners.keyPress.bind(document));

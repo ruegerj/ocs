@@ -1,8 +1,10 @@
 export type KeyMap = {
-    [key: number]: {
-        action: string;
-        ctrl?: boolean;
-        alt?: boolean;
-        shift?: boolean;
-    };
+    [action: string]: KeyBinding;
+};
+
+export type KeyBinding = {
+    keyCode: number;
+    ctrl?: boolean;
+    alt?: boolean;
+    shift?: boolean;
 };
