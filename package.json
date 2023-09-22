@@ -15,7 +15,8 @@
     },
     "private": true,
     "scripts": {
-        "lint": "eslint ./src --ignore-path .eslintignore --ext .ts"
+        "lint": "eslint ./src --ignore-path .eslintignore --ext .ts",
+        "typecheck": "tsc -p ./jsconfig.json"
     },
     "type": "module"
 }
