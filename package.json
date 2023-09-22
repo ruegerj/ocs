@@ -1,15 +1,21 @@
 {
   "name": "ocs",
   "module": "worker.js",
-  "type": "module",
   "devDependencies": {
     "@types/chrome": "^0.0.245",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
     "bun-types": "latest",
+    "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
     "prettier": "^3.0.3",
     "prettier-plugin-tailwindcss": "^0.5.4",
-    "tailwindcss": "^3.3.3"
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.2.2"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+  "peerDependencies": {},
+  "scripts": {
+    "lint": "eslint ./src --ignore-path .eslintignore --ext .ts"
+  },
+  "type": "module"
 }
