@@ -1,13 +1,14 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
+import { ALT, CTRL, SHIFT, getKeyDisplayName } from '../keys';
 import { log } from '../log';
 import { KeyBinding, KeyMap } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let port: chrome.runtime.Port;
 
-function populateForm(keyMap: KeyMap): void {
+function populateForm(keyMap: KeyMap, os: chrome.runtime.PlatformOs): void {
     for (const action of Object.keys(keyMap)) {
         const input = document.getElementById(action);
         const binding = keyMap[action];
@@ -16,32 +17,33 @@ function populateForm(keyMap: KeyMap): void {
             continue;
         }
 
-        input.textContent = serialize(binding);
+        input.textContent = serialize(binding, os);
     }
 }
 
-function serialize(binding: KeyBinding): string {
+function serialize(binding: KeyBinding, os: chrome.runtime.PlatformOs): string {
     const parts: string[] = [];
 
     if (binding.ctrl) {
-        parts.push('Ctrl');
+        parts.push(getKeyDisplayName(CTRL, os));
     }
 
     if (binding.alt) {
-        parts.push('Alt');
+        parts.push(getKeyDisplayName(ALT, os));
     }
 
     if (binding.shift) {
-        parts.push('Shift');
+        parts.push(getKeyDisplayName(SHIFT, os));
     }
 
-    parts.push(String.fromCharCode(binding.keyCode).toLocaleUpperCase());
+    parts.push(getKeyDisplayName(binding.keyCode, os));
 
     return parts.join(' + ');
 }
 
 (async () => {
     port = chrome.runtime.connect({ name: 'popup' });
+    const { os } = await chrome.runtime.getPlatformInfo();
 
     const keyMap = await chrome.runtime.sendMessage({
         request: 'load-map',
@@ -49,5 +51,5 @@ function serialize(binding: KeyBinding): string {
 
     log('Key mappings loaded', keyMap);
 
-    populateForm(keyMap);
+    populateForm(keyMap, os);
 })();
