@@ -5,5 +5,6 @@ export default {
     theme: {
         extend: {},
     },
+    safelist: ['key', 'plus'],
     plugins: [],
 };

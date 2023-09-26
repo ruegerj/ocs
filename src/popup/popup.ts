@@ -17,28 +17,52 @@ function populateForm(keyMap: KeyMap, os: chrome.runtime.PlatformOs): void {
             continue;
         }
 
-        input.textContent = serialize(binding, os);
+        for (const elem of serialize(binding, os)) {
+            input.insertAdjacentElement('beforeend', elem);
+        }
     }
 }
 
-function serialize(binding: KeyBinding, os: chrome.runtime.PlatformOs): string {
-    const parts: string[] = [];
+function serialize(
+    binding: KeyBinding,
+    os: chrome.runtime.PlatformOs,
+): HTMLElement[] {
+    const parts: HTMLElement[] = [];
 
     if (binding.ctrl) {
-        parts.push(getKeyDisplayName(CTRL, os));
+        parts.push(createKeyElement(getKeyDisplayName(CTRL, os)));
+        parts.push(createPlusElement());
     }
 
     if (binding.alt) {
-        parts.push(getKeyDisplayName(ALT, os));
+        parts.push(createKeyElement(getKeyDisplayName(ALT, os)));
+        parts.push(createPlusElement());
     }
 
     if (binding.shift) {
-        parts.push(getKeyDisplayName(SHIFT, os));
+        parts.push(createKeyElement(getKeyDisplayName(SHIFT, os)));
+        parts.push(createPlusElement());
     }
 
-    parts.push(getKeyDisplayName(binding.keyCode, os));
+    parts.push(createKeyElement(getKeyDisplayName(binding.keyCode, os)));
 
-    return parts.join(' + ');
+    return parts;
+}
+
+function createKeyElement(key: string): HTMLElement {
+    const keyElem = document.createElement('span');
+    keyElem.className = 'key';
+    keyElem.textContent = key;
+
+    return keyElem;
+}
+
+function createPlusElement(): HTMLElement {
+    const plusElem = document.createElement('span');
+    plusElem.className = 'plus';
+    plusElem.textContent = '+';
+
+    return plusElem;
 }
 
 (async () => {
