@@ -21,7 +21,13 @@ import { copyFile } from 'node:fs/promises';
 
     console.log('🤖JS compiled & bundled');
 
-    const tailwindArgs = ['-o', 'bin/popup/popup.css', '--minify'];
+    const tailwindArgs = [
+        '-i',
+        'src/popup/popup.css',
+        '-o',
+        'bin/popup/popup.css',
+        '--minify',
+    ];
 
     const tailwind = Bun.spawnSync(['bunx', 'tailwindcss', ...tailwindArgs]);
     if (!tailwind.success) {
