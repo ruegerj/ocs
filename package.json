@@ -6,6 +6,7 @@
         "@typescript-eslint/eslint-plugin": "^6.7.2",
         "@typescript-eslint/parser": "^6.7.2",
         "bun-types": "latest",
+        "cpy-cli": "^5.0.0",
         "eslint": "^8.49.0",
         "eslint-config-prettier": "^9.0.0",
         "prettier": "^3.0.3",
@@ -16,6 +17,10 @@
     "private": true,
     "scripts": {
         "lint": "eslint ./src --ignore-path .eslintignore --ext .ts",
+        "build": "bun run build:code && bun run build:tailwind && bun run copy:static",
+        "build:code": "bun build --minify --outdir bin --target browser src/worker.ts src/scripts/shortcuts.ts src/popup/popup.ts",
+        "build:tailwind": "tailwindcss -i src/popup/popup.css -o bin/popup/popup.css --minify",
+        "copy:static": "cpy --flat src/manifest.json bin && cpy --flat src/popup/popup.html bin/popup",
         "typecheck": "tsc -p ./jsconfig.json"
     },
     "type": "module"
