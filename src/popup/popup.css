@@ -4,10 +4,10 @@
 
 @layer components {
     .key {
-        @apply rounded-sm bg-slate-700 px-3.5 py-2.5 text-sm font-semibold uppercase leading-normal shadow-md;
+        @apply rounded-sm bg-slate-700 px-3.5 py-2 text-sm font-semibold uppercase leading-normal shadow-md;
     }
 
     .plus {
-        @apply text-xl;
+        @apply px-2 text-sm;
     }
 }
