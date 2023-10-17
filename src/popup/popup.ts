@@ -3,7 +3,12 @@
 
 import { ALT, CTRL, SHIFT, getKeyDisplayName, isValidKey } from '../keys';
 import { log } from '../log';
-import { KeyBinding, KeyMap } from '../types';
+import {
+    FocusoutEventListener,
+    KeyBinding,
+    KeyMap,
+    KeyboardEventListener,
+} from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let port: chrome.runtime.Port;
@@ -40,9 +45,9 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
 
     const previousBinding = keyMap[action];
 
-    let keydownListener;
-    let keyupListener;
-    let focusLostListener;
+    let keydownListener: KeyboardEventListener = () => {};
+    let keyupListener: KeyboardEventListener = () => {};
+    let focusLostListener: FocusoutEventListener = () => {};
 
     const waitForBind = new Promise<KeyBinding>((res) => {
         let latestBinding: KeyBinding = { keyCode: -1 };
@@ -100,6 +105,11 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
         waitForBind,
         waitForFocusLost,
     ]);
+
+    // clean up event listeners
+    document.removeEventListener('keydown', keydownListener);
+    document.removeEventListener('keyup', keyupListener);
+    inputGroup.removeEventListener('focusout', focusLostListener);
 
     keyMap[action] = updatedBinding;
     renderBinding(action, updatedBinding);
