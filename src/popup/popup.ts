@@ -41,34 +41,57 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
     const previousBinding = keyMap[action];
 
     let keydownListener;
+    let keyupListener;
     let focusLostListener;
 
     const waitForBind = new Promise<KeyBinding>((res) => {
+        let latestBinding: KeyBinding = { keyCode: -1 };
+
         keydownListener = (event: KeyboardEvent) => {
             event.preventDefault();
             const key = event.keyCode;
 
             if (!isValidKey(key)) {
+                renderBinding(action, {
+                    keyCode: -1, // "hidden" key
+                    ctrl: event.ctrlKey,
+                    alt: event.altKey,
+                    shift: event.shiftKey,
+                });
                 return;
             }
 
-            const newBinding: KeyBinding = {
+            latestBinding = {
                 keyCode: key,
                 alt: event.altKey,
                 ctrl: event.ctrlKey,
                 shift: event.shiftKey,
             };
 
-            res(newBinding);
+            res(latestBinding);
+        };
+
+        keyupListener = (event: KeyboardEvent) => {
+            event.preventDefault();
+
+            if (isValidKey(latestBinding.keyCode)) {
+                return;
+            }
+
+            renderBinding(action, {
+                keyCode: -1, // "hidden" key
+                alt: event.altKey,
+                ctrl: event.ctrlKey,
+                shift: event.shiftKey,
+            });
         };
 
         document.addEventListener('keydown', keydownListener);
+        document.addEventListener('keyup', keyupListener);
     });
 
     const waitForFocusLost = new Promise<KeyBinding>((res) => {
-        focusLostListener = () => {
-            res(previousBinding);
-        };
+        focusLostListener = () => res(previousBinding);
 
         inputGroup.addEventListener('focusout', focusLostListener);
     });
@@ -79,8 +102,11 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
     ]);
 
     keyMap[action] = updatedBinding;
-
     renderBinding(action, updatedBinding);
+
+    log(`Updated keybinding for action: ${action}`, updatedBinding);
+
+    // TODO save to config via worker
 }
 
 function renderBinding(action: string, binding: KeyBinding): void {
@@ -106,15 +132,15 @@ function renderBinding(action: string, binding: KeyBinding): void {
         parts.push(createPlusElement());
     }
 
-    parts.push(createKeyElement(getKeyDisplayName(binding.keyCode, os)));
+    if (binding.keyCode > 0) {
+        parts.push(createKeyElement(getKeyDisplayName(binding.keyCode, os)));
+    }
 
     input.innerHTML = ''; // ensure no child nodes
 
     for (const elem of parts) {
         input.insertAdjacentElement('beforeend', elem);
     }
-
-    // TODO save to config
 }
 
 function createKeyElement(key: string): HTMLElement {
