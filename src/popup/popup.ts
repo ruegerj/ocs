@@ -1,33 +1,95 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
-import { ALT, CTRL, SHIFT, getKeyDisplayName } from '../keys';
+import { ALT, CTRL, SHIFT, getKeyDisplayName, isValidKey } from '../keys';
 import { log } from '../log';
 import { KeyBinding, KeyMap } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 let port: chrome.runtime.Port;
+let os: chrome.runtime.PlatformOs;
 
-function populateForm(keyMap: KeyMap, os: chrome.runtime.PlatformOs): void {
+function mountForm(keyMap: KeyMap): void {
     for (const action of Object.keys(keyMap)) {
-        const input = document.getElementById(action);
+        const inputGroup = getInputGroup(action);
         const binding = keyMap[action];
 
-        if (!input) {
+        if (!inputGroup) {
             continue;
         }
 
-        for (const elem of serialize(binding, os)) {
-            input.insertAdjacentElement('beforeend', elem);
-        }
+        renderBinding(action, binding);
+
+        inputGroup.addEventListener('click', (e) => {
+            e.preventDefault();
+            changeKeyBind(action, keyMap);
+        });
     }
 }
 
-function serialize(
-    binding: KeyBinding,
-    os: chrome.runtime.PlatformOs,
-): HTMLElement[] {
+async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
+    const inputGroup = getInputGroup(action);
+    const input = getInput(action);
+
+    if (!inputGroup || !input) {
+        throw new Error(`Failed to find input(-group) for action: ${action}`);
+    }
+
+    input.innerHTML = '';
+    inputGroup.focus();
+
+    const previousBinding = keyMap[action];
+
+    let keydownListener;
+    let focusLostListener;
+
+    const waitForBind = new Promise<KeyBinding>((res) => {
+        keydownListener = (event: KeyboardEvent) => {
+            event.preventDefault();
+            const key = event.keyCode;
+
+            if (!isValidKey(key)) {
+                return;
+            }
+
+            const newBinding: KeyBinding = {
+                keyCode: key,
+                alt: event.altKey,
+                ctrl: event.ctrlKey,
+                shift: event.shiftKey,
+            };
+
+            res(newBinding);
+        };
+
+        document.addEventListener('keydown', keydownListener);
+    });
+
+    const waitForFocusLost = new Promise<KeyBinding>((res) => {
+        focusLostListener = () => {
+            res(previousBinding);
+        };
+
+        inputGroup.addEventListener('focusout', focusLostListener);
+    });
+
+    const updatedBinding = await Promise.any<KeyBinding>([
+        waitForBind,
+        waitForFocusLost,
+    ]);
+
+    keyMap[action] = updatedBinding;
+
+    renderBinding(action, updatedBinding);
+}
+
+function renderBinding(action: string, binding: KeyBinding): void {
     const parts: HTMLElement[] = [];
+    const input = getInput(action);
+
+    if (!input) {
+        return;
+    }
 
     if (binding.ctrl) {
         parts.push(createKeyElement(getKeyDisplayName(CTRL, os)));
@@ -46,7 +108,13 @@ function serialize(
 
     parts.push(createKeyElement(getKeyDisplayName(binding.keyCode, os)));
 
-    return parts;
+    input.innerHTML = ''; // ensure no child nodes
+
+    for (const elem of parts) {
+        input.insertAdjacentElement('beforeend', elem);
+    }
+
+    // TODO save to config
 }
 
 function createKeyElement(key: string): HTMLElement {
@@ -65,9 +133,19 @@ function createPlusElement(): HTMLElement {
     return plusElem;
 }
 
+function getInput(action: string): HTMLElement | null {
+    return document.getElementById(action);
+}
+
+function getInputGroup(action: string): HTMLElement | null {
+    const group = document.getElementById(action)?.parentElement;
+    return group ? group : null;
+}
+
 (async () => {
     port = chrome.runtime.connect({ name: 'popup' });
-    const { os } = await chrome.runtime.getPlatformInfo();
+    const platform = await chrome.runtime.getPlatformInfo();
+    os = platform.os;
 
     const keyMap = await chrome.runtime.sendMessage({
         request: 'load-map',
@@ -75,5 +153,5 @@ function createPlusElement(): HTMLElement {
 
     log('Key mappings loaded', keyMap);
 
-    populateForm(keyMap, os);
+    mountForm(keyMap);
 })();
