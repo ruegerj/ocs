@@ -159,14 +159,22 @@ function waitUntilLoaded(callback: (...args: unknown[]) => void) {
     });
 }
 
-(async () => {
+function onPortMessage(message: Message): void {
+    if (message.request === 'reload-map') {
+        return onReloadKeyMap(message as Message<KeyMap>);
+    }
+}
+
+function connectToWorker(): void {
     port = chrome.runtime.connect({ name: 'shortcuts' });
-    port.onDisconnect.addListener(unmount);
-    port.onMessage.addListener((message: Message) => {
-        if (message.request === 'reload-map') {
-            return onReloadKeyMap(message as Message<KeyMap>);
-        }
-    });
+    port.onDisconnect.addListener(connectToWorker);
+    port.onMessage.addListener(onPortMessage);
+
+    log('Connected to worker');
+}
+
+(async () => {
+    connectToWorker();
 
     const keyMap = await chrome.runtime.sendMessage<Message>({
         request: 'load-map',

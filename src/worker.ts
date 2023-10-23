@@ -1,4 +1,9 @@
+import { log } from './log';
 import type { KeyMap, Message } from './types';
+
+interface TimedPort extends chrome.runtime.Port {
+    _timer?: Timer;
+}
 
 const DEFAULT_KEY_MAP: KeyMap = {
     prev: { keyCode: 37 }, // arr left
@@ -11,8 +16,9 @@ const DEFAULT_KEY_MAP: KeyMap = {
     showMonth: { keyCode: 77 }, // m
     search: { keyCode: 70, ctrl: true }, // ctrl + f
 };
+const PORT_LIFETIME_MS = 250e3;
 
-const openPorts: chrome.runtime.Port[] = [];
+const openPorts: TimedPort[] = [];
 
 async function loadKeyMap(): Promise<KeyMap | undefined> {
     const { keyMap } = await chrome.storage.local.get('keyMap');
@@ -28,10 +34,24 @@ async function storeKeyMap(keyMap: KeyMap): Promise<void> {
     });
 }
 
-function broadcast<TData>(message: Message<TData>) {
+function broadcast<TData>(message: Message<TData>): void {
     for (const port of openPorts) {
         port.postMessage(message);
     }
+}
+
+function forceReconnect(port: TimedPort): void {
+    deleteTimer(port);
+    port.disconnect();
+}
+
+function deleteTimer(port: TimedPort): void {
+    if (!port._timer) {
+        return;
+    }
+
+    clearTimeout(port._timer);
+    delete port._timer;
 }
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
@@ -40,27 +60,20 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
     }
 });
 
-chrome.runtime.onConnect.addListener(async (port) => {
-    openPorts.push(port);
+chrome.runtime.onConnect.addListener((port: TimedPort) => {
+    port._timer = setTimeout(forceReconnect, PORT_LIFETIME_MS);
+    port.onDisconnect.addListener((port: TimedPort) => {
+        deleteTimer(port);
 
-    if (port.name === 'shortcuts') {
-        console.log('Content script established connection');
-    }
-
-    if (port.name === 'popup') {
-        console.log('Popup established connection');
-    }
-
-    port.onDisconnect.addListener((port) => {
-        console.log(`Port ${port.name} closed connection`);
         const index = openPorts.indexOf(port);
-
         if (index < 0) {
             return;
         }
-
         openPorts.splice(index, 1);
     });
+    openPorts.push(port);
+
+    log(`Port ${port.name} established connection`);
 });
 
 chrome.runtime.onMessage.addListener((message: Message, _, respond) => {
