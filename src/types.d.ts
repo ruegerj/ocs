@@ -10,7 +10,7 @@ export type KeyBinding = {
 };
 
 export type Message<TData = Record<string, unknown>> = {
-    request: 'load-map' | 'save-map';
+    request: 'load-map' | 'save-map' | 'reload-map';
     data?: TData;
 };
 

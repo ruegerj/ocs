@@ -12,6 +12,8 @@ const DEFAULT_KEY_MAP: KeyMap = {
     search: { keyCode: 70, ctrl: true }, // ctrl + f
 };
 
+const openPorts: chrome.runtime.Port[] = [];
+
 async function loadKeyMap(): Promise<KeyMap | undefined> {
     const { keyMap } = await chrome.storage.local.get('keyMap');
     return keyMap;
@@ -19,6 +21,17 @@ async function loadKeyMap(): Promise<KeyMap | undefined> {
 
 async function storeKeyMap(keyMap: KeyMap): Promise<void> {
     await chrome.storage.local.set({ keyMap });
+
+    broadcast<KeyMap>({
+        request: 'reload-map',
+        data: keyMap,
+    });
+}
+
+function broadcast<TData>(message: Message<TData>) {
+    for (const port of openPorts) {
+        port.postMessage(message);
+    }
 }
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
@@ -28,6 +41,8 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 });
 
 chrome.runtime.onConnect.addListener(async (port) => {
+    openPorts.push(port);
+
     if (port.name === 'shortcuts') {
         console.log('Content script established connection');
     }
@@ -38,6 +53,13 @@ chrome.runtime.onConnect.addListener(async (port) => {
 
     port.onDisconnect.addListener((port) => {
         console.log(`Port ${port.name} closed connection`);
+        const index = openPorts.indexOf(port);
+
+        if (index < 0) {
+            return;
+        }
+
+        openPorts.splice(index, 1);
     });
 });
 

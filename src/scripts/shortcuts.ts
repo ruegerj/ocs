@@ -110,17 +110,30 @@ function mount(keyMap: KeyMap): void {
         handleKeyPress(event, keyMappingLookup, elements);
     listeners.unload = port.disconnect;
 
-    document.addEventListener('keydown', listeners.keyPress.bind(document));
-    window.addEventListener('beforeunload', listeners.unload.bind(document));
+    document.addEventListener('keydown', listeners.keyPress);
+    window.addEventListener('beforeunload', listeners.unload);
 
     log('Event listeners mounted');
 }
 
 function unmount() {
-    document.removeEventListener('keydown', listeners.unload);
+    document.removeEventListener('keydown', listeners.keyPress);
     window.removeEventListener('beforeunload', listeners.unload);
 
     log('Event listeners unmounted');
+}
+
+function onReloadKeyMap(message: Message<KeyMap>) {
+    const keyMap = message.data as KeyMap;
+
+    if (!keyMap) {
+        return;
+    }
+
+    log('Key map has changed', keyMap);
+
+    unmount();
+    mount(keyMap);
 }
 
 function waitUntilLoaded(callback: (...args: unknown[]) => void) {
@@ -149,6 +162,11 @@ function waitUntilLoaded(callback: (...args: unknown[]) => void) {
 (async () => {
     port = chrome.runtime.connect({ name: 'shortcuts' });
     port.onDisconnect.addListener(unmount);
+    port.onMessage.addListener((message: Message) => {
+        if (message.request === 'reload-map') {
+            return onReloadKeyMap(message as Message<KeyMap>);
+        }
+    });
 
     const keyMap = await chrome.runtime.sendMessage<Message>({
         request: 'load-map',
