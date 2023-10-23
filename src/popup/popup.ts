@@ -11,8 +11,6 @@ import {
     Message,
 } from '../types';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-let port: chrome.runtime.Port;
 let os: chrome.runtime.PlatformOs;
 
 function mountForm(keyMap: KeyMap): void {
@@ -183,11 +181,10 @@ function getInputGroup(action: string): HTMLElement | null {
 }
 
 (async () => {
-    port = chrome.runtime.connect({ name: 'popup' });
     const platform = await chrome.runtime.getPlatformInfo();
     os = platform.os;
 
-    const keyMap = await chrome.runtime.sendMessage({
+    const keyMap = await chrome.runtime.sendMessage<Message>({
         request: 'load-map',
     });
 
