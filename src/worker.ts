@@ -1,4 +1,4 @@
-import type { KeyMap } from './types';
+import type { KeyMap, Message } from './types';
 
 const DEFAULT_KEY_MAP: KeyMap = {
     prev: { keyCode: 37 }, // arr left
@@ -30,16 +30,30 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
 chrome.runtime.onConnect.addListener(async (port) => {
     if (port.name === 'shortcuts') {
         console.log('Content script established connection');
-
-        port.onDisconnect.addListener(() => {
-            console.log('Content script closed connection');
-        });
     }
+
+    if (port.name === 'popup') {
+        console.log('Popup established connection');
+    }
+
+    port.onDisconnect.addListener((port) => {
+        console.log(`Port ${port.name} closed connection`);
+    });
 });
 
-chrome.runtime.onMessage.addListener((message, _, respond) => {
+chrome.runtime.onMessage.addListener((message: Message, _, respond) => {
     if (message.request === 'load-map') {
         loadKeyMap().then(respond);
+        return true;
+    }
+
+    if (message.request === 'save-map') {
+        const map: KeyMap | undefined = (message as Message<KeyMap>).data;
+        if (!map) {
+            return false;
+        }
+
+        storeKeyMap(map).then(respond);
         return true;
     }
 });

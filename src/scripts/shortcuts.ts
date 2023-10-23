@@ -2,7 +2,7 @@
 /// <reference lib="dom.iterable" />
 
 import { log } from '../log';
-import type { KeyMap } from '../types';
+import type { KeyMap, Message } from '../types';
 
 type ElementsRegistry = Map<string, HTMLElement>;
 type ActionHandler = (elements: ElementsRegistry) => void;
@@ -150,7 +150,7 @@ function waitUntilLoaded(callback: (...args: unknown[]) => void) {
     port = chrome.runtime.connect({ name: 'shortcuts' });
     port.onDisconnect.addListener(unmount);
 
-    const keyMap = await chrome.runtime.sendMessage({
+    const keyMap = await chrome.runtime.sendMessage<Message>({
         request: 'load-map',
     });
 

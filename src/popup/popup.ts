@@ -8,6 +8,7 @@ import {
     KeyBinding,
     KeyMap,
     KeyboardEventListener,
+    Message,
 } from '../types';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -114,9 +115,12 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
     keyMap[action] = updatedBinding;
     renderBinding(action, updatedBinding);
 
-    log(`Updated keybinding for action: ${action}`, updatedBinding);
+    await chrome.runtime.sendMessage<Message<KeyMap>>({
+        request: 'save-map',
+        data: keyMap,
+    });
 
-    // TODO save to config via worker
+    log(`Updated keybinding for action: ${action}`, updatedBinding);
 }
 
 function renderBinding(action: string, binding: KeyBinding): void {
