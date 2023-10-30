@@ -1,6 +1,7 @@
 export const SHIFT = 16;
 export const CTRL = 17;
 export const ALT = 18;
+export const OS = 91;
 
 const MODIFIER_KEYS = [SHIFT, CTRL, ALT];
 
@@ -54,27 +55,14 @@ const KEY_DISPLAY_NAME_LOOKUP = new Map<number, string>([
     [190, '.'],
 ]);
 
-export function getKeyDisplayName(
-    key: number,
-    platform: chrome.runtime.PlatformOs,
-): string {
-    let displayName = KEY_DISPLAY_NAME_LOOKUP.get(key);
+export function getKeyDisplayName(key: number): string {
+    const displayName = KEY_DISPLAY_NAME_LOOKUP.get(key);
 
-    if (!displayName) {
-        return '';
-    }
-
-    // Win (Windows) / Command (Mac)
-    if (key === 91) {
-        displayName =
-            platform == 'mac' ? 'CMD' : platform === 'win' ? 'Win' : 'OS';
-    }
-
-    return displayName;
+    return displayName ? displayName : '';
 }
 
 export function isValidKey(key: number): boolean {
-    if (MODIFIER_KEYS.includes(key)) {
+    if (MODIFIER_KEYS.includes(key) || key === OS) {
         return false;
     }
 

@@ -11,8 +11,6 @@ import {
     Message,
 } from '../types';
 
-let os: chrome.runtime.PlatformOs;
-
 function mountForm(keyMap: KeyMap): void {
     for (const action of Object.keys(keyMap)) {
         const inputGroup = getInputGroup(action);
@@ -130,22 +128,22 @@ function renderBinding(action: string, binding: KeyBinding): void {
     }
 
     if (binding.ctrl) {
-        parts.push(createKeyElement(getKeyDisplayName(CTRL, os)));
+        parts.push(createKeyElement(getKeyDisplayName(CTRL)));
         parts.push(createPlusElement());
     }
 
     if (binding.alt) {
-        parts.push(createKeyElement(getKeyDisplayName(ALT, os)));
+        parts.push(createKeyElement(getKeyDisplayName(ALT)));
         parts.push(createPlusElement());
     }
 
     if (binding.shift) {
-        parts.push(createKeyElement(getKeyDisplayName(SHIFT, os)));
+        parts.push(createKeyElement(getKeyDisplayName(SHIFT)));
         parts.push(createPlusElement());
     }
 
     if (binding.keyCode > 0) {
-        parts.push(createKeyElement(getKeyDisplayName(binding.keyCode, os)));
+        parts.push(createKeyElement(getKeyDisplayName(binding.keyCode)));
     }
 
     input.innerHTML = ''; // ensure no child nodes
@@ -181,9 +179,6 @@ function getInputGroup(action: string): HTMLElement | null {
 }
 
 (async () => {
-    const platform = await chrome.runtime.getPlatformInfo();
-    os = platform.os;
-
     const keyMap = await chrome.runtime.sendMessage<Message>({
         request: 'load-map',
     });

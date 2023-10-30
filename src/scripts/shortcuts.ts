@@ -15,7 +15,7 @@ type KeyBindingLookup = {
     };
 };
 
-const actionRegistry = new Map<string, ActionHandler>([
+const ACTION_REGISTRY = new Map<string, ActionHandler>([
     ['prev', (elements) => elements.get('prevBtn')?.click()],
     ['next', (elements) => elements.get('nextBtn')?.click()],
     ['today', (elements) => elements.get('todayBtn')?.click()],
@@ -78,7 +78,7 @@ function handleKeyPress(
         return;
     }
 
-    const action = actionRegistry.get(mapping.action);
+    const action = ACTION_REGISTRY.get(mapping.action);
 
     if (
         (mapping.ctrl && !event.ctrlKey) ||
