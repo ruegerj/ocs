@@ -1,11 +1,11 @@
 import { log } from './log';
-import type { KeyMap, Message } from './types';
+import type { KeyBindingMap, Message } from './types';
 
 interface TimedPort extends chrome.runtime.Port {
     _timer?: Timer;
 }
 
-const DEFAULT_KEY_MAP: KeyMap = {
+const DEFAULT_KEY_MAP: KeyBindingMap = {
     prev: { keyCode: 37 }, // arr left
     next: { keyCode: 39 }, // arr right
     today: { keyCode: 84 }, // t
@@ -20,15 +20,15 @@ const PORT_LIFETIME_MS = 250e3;
 
 const openPorts: TimedPort[] = [];
 
-async function loadKeyMap(): Promise<KeyMap | undefined> {
+async function loadKeyMap(): Promise<KeyBindingMap | undefined> {
     const { keyMap } = await chrome.storage.local.get('keyMap');
     return keyMap;
 }
 
-async function storeKeyMap(keyMap: KeyMap): Promise<void> {
+async function storeKeyMap(keyMap: KeyBindingMap): Promise<void> {
     await chrome.storage.local.set({ keyMap });
 
-    broadcast<KeyMap>({
+    broadcast<KeyBindingMap>({
         request: 'reload-map',
         data: keyMap,
     });
@@ -83,7 +83,9 @@ chrome.runtime.onMessage.addListener((message: Message, _, respond) => {
     }
 
     if (message.request === 'save-map') {
-        const map: KeyMap | undefined = (message as Message<KeyMap>).data;
+        const map: KeyBindingMap | undefined = (
+            message as Message<KeyBindingMap>
+        ).data;
         if (!map) {
             return false;
         }

@@ -1,13 +1,15 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
+import { KeyCombination } from '../key-binding';
+import { getKeyDisplayName } from '../keys';
 import { log } from '../log';
-import type { KeyMap, Message } from '../types';
+import type { KeyBindingMap, Message } from '../types';
 
 type ElementsRegistry = Map<string, HTMLElement>;
 type ActionHandler = (elements: ElementsRegistry) => void;
 type KeyBindingLookup = {
-    [keyCode: number]: {
+    [id: string]: {
         action: string;
         ctrl?: boolean;
         alt?: boolean;
@@ -72,7 +74,8 @@ function handleKeyPress(
     keyBindingLookup: KeyBindingLookup,
     elements: ElementsRegistry,
 ): void {
-    const mapping = keyBindingLookup[event.keyCode];
+    const combination = KeyCombination.fromEvent(event);
+    const mapping = keyBindingLookup[calcCombinationId(combination)];
 
     if (!mapping) {
         return;
@@ -93,11 +96,13 @@ function handleKeyPress(
     action(elements);
 }
 
-function mount(keyMap: KeyMap): void {
+function mount(keyMap: KeyBindingMap): void {
     const elements = scrapeElements();
+
     const keyMappingLookup = Object.entries(keyMap).reduce((acc, cur) => {
         const [action, binding] = cur;
-        acc[binding.keyCode] = {
+
+        acc[calcCombinationId(binding)] = {
             action,
             alt: binding.alt,
             shift: binding.shift,
@@ -123,8 +128,8 @@ function unmount() {
     log('Event listeners unmounted');
 }
 
-function onReloadKeyMap(message: Message<KeyMap>) {
-    const keyMap = message.data as KeyMap;
+function onReloadKeyMap(message: Message<KeyBindingMap>) {
+    const keyMap = message.data as KeyBindingMap;
 
     if (!keyMap) {
         return;
@@ -134,6 +139,17 @@ function onReloadKeyMap(message: Message<KeyMap>) {
 
     unmount();
     mount(keyMap);
+}
+
+function calcCombinationId(keyCombination: KeyCombination): string {
+    const idParts: string[] = [
+        keyCombination.ctrl ? 'ctrl' : '',
+        keyCombination.alt ? 'alt' : '',
+        keyCombination.shift ? 'shift' : '',
+        getKeyDisplayName(keyCombination.keyCode),
+    ];
+
+    return idParts.filter((p) => p).join('+');
 }
 
 function waitUntilLoaded(callback: (...args: unknown[]) => void) {
@@ -161,7 +177,7 @@ function waitUntilLoaded(callback: (...args: unknown[]) => void) {
 
 function onPortMessage(message: Message): void {
     if (message.request === 'reload-map') {
-        return onReloadKeyMap(message as Message<KeyMap>);
+        return onReloadKeyMap(message as Message<KeyBindingMap>);
     }
 }
 
