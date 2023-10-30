@@ -1,12 +1,7 @@
-export type KeyMap = {
-    [action: string]: KeyBinding;
-};
+import { KeyCombination } from './key-binding';
 
-export type KeyBinding = {
-    keyCode: number;
-    ctrl?: boolean;
-    alt?: boolean;
-    shift?: boolean;
+export type KeyBindingMap = {
+    [action: string]: KeyCombination;
 };
 
 export type Message<TData = Record<string, unknown>> = {

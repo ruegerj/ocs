@@ -1,17 +1,17 @@
 /// <reference lib="dom" />
 /// <reference lib="dom.iterable" />
 
+import { KeyCombination } from '../key-binding';
 import { ALT, CTRL, SHIFT, getKeyDisplayName, isValidKey } from '../keys';
 import { log } from '../log';
 import {
     FocusoutEventListener,
-    KeyBinding,
-    KeyMap,
+    KeyBindingMap,
     KeyboardEventListener,
     Message,
 } from '../types';
 
-function mountForm(keyMap: KeyMap): void {
+function mountForm(keyMap: KeyBindingMap): void {
     for (const action of Object.keys(keyMap)) {
         const inputGroup = getInputGroup(action);
         const binding = keyMap[action];
@@ -29,7 +29,10 @@ function mountForm(keyMap: KeyMap): void {
     }
 }
 
-async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
+async function changeKeyBind(
+    action: string,
+    keyMap: KeyBindingMap,
+): Promise<void> {
     const inputGroup = getInputGroup(action);
     const input = getInput(action);
 
@@ -46,29 +49,26 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
     let keyupListener: KeyboardEventListener = () => {};
     let focusLostListener: FocusoutEventListener = () => {};
 
-    const waitForBind = new Promise<KeyBinding>((res) => {
-        let latestBinding: KeyBinding = { keyCode: -1 };
+    const waitForBind = new Promise<KeyCombination>((res) => {
+        let latestBinding = new KeyCombination(-1);
 
         keydownListener = (event: KeyboardEvent) => {
             event.preventDefault();
             const key = event.keyCode;
 
             if (!isValidKey(key)) {
-                renderBinding(action, {
-                    keyCode: -1, // "hidden" key
-                    ctrl: event.ctrlKey,
-                    alt: event.altKey,
-                    shift: event.shiftKey,
-                });
+                const emptyBinding = KeyCombination.fromEvent(event);
+                emptyBinding.keyCode - 1;
+                renderBinding(action, emptyBinding);
                 return;
             }
 
-            latestBinding = {
-                keyCode: key,
-                alt: event.altKey,
-                ctrl: event.ctrlKey,
-                shift: event.shiftKey,
-            };
+            latestBinding = new KeyCombination(
+                key,
+                event.ctrlKey,
+                event.altKey,
+                event.shiftKey,
+            );
 
             res(latestBinding);
         };
@@ -80,25 +80,22 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
                 return;
             }
 
-            renderBinding(action, {
-                keyCode: -1, // "hidden" key
-                alt: event.altKey,
-                ctrl: event.ctrlKey,
-                shift: event.shiftKey,
-            });
+            const emptyBinding = KeyCombination.fromEvent(event);
+            emptyBinding.keyCode - 1;
+            renderBinding(action, emptyBinding);
         };
 
         document.addEventListener('keydown', keydownListener);
         document.addEventListener('keyup', keyupListener);
     });
 
-    const waitForFocusLost = new Promise<KeyBinding>((res) => {
+    const waitForFocusLost = new Promise<KeyCombination>((res) => {
         focusLostListener = () => res(previousBinding);
 
         inputGroup.addEventListener('focusout', focusLostListener);
     });
 
-    const updatedBinding = await Promise.any<KeyBinding>([
+    const updatedBinding = await Promise.any<KeyCombination>([
         waitForBind,
         waitForFocusLost,
     ]);
@@ -111,7 +108,7 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
     keyMap[action] = updatedBinding;
     renderBinding(action, updatedBinding);
 
-    await chrome.runtime.sendMessage<Message<KeyMap>>({
+    await chrome.runtime.sendMessage<Message<KeyBindingMap>>({
         request: 'save-map',
         data: keyMap,
     });
@@ -119,7 +116,7 @@ async function changeKeyBind(action: string, keyMap: KeyMap): Promise<void> {
     log(`Updated keybinding for action: ${action}`, updatedBinding);
 }
 
-function renderBinding(action: string, binding: KeyBinding): void {
+function renderBinding(action: string, binding: KeyCombination): void {
     const parts: HTMLElement[] = [];
     const input = getInput(action);
 
@@ -142,7 +139,7 @@ function renderBinding(action: string, binding: KeyBinding): void {
         parts.push(createPlusElement());
     }
 
-    if (binding.keyCode > 0) {
+    if (binding.keyCode > 0 && isValidKey(binding.keyCode)) {
         parts.push(createKeyElement(getKeyDisplayName(binding.keyCode)));
     }
 
